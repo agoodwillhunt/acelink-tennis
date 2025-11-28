@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <!-- 确保在移动端正确缩放，禁止用户缩放以保持 App 质感 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AceLink - 一击直达你的网球世界</title>
+    <style>
+        /* --- 全局变量定义 --- */
+        :root {
+            --primary-color: #333;
+            --secondary-color: #666;
+            --accent-color: #2cba6c; /* AceLink 主题绿 */
+            --bg-color: #f8f9fa; /* App 内容背景色 */
+            --card-bg: #fff; /* 卡片背景色 */
+            --search-bg: #e9ecef; /* 搜索框背景色 */
+            --card-border-radius: 12px;
+            --section-spacing: 24px;
+            --app-max-width: 430px; /* 限制最大宽度，模拟手机 */
+        }
+
+        /* --- 基础重置 --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* 移除移动端点击高亮 */
+        }
+
+        html, body {
+            height: 100%;
+            background-color: #e0e0e0; /* 大屏下的背景底色 */
+            display: flex;
+            justify-content: center; /* 居中显示 App */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--primary-color);
+        }
+
+        /* --- App 主容器 --- */
+        .app-container {
+            width: 100%;
+            max-width: var(--app-max-width);
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            box-shadow: 0 0 40px rgba(0,0,0,0.1); /* 增加立体感阴影 */
+            position: relative;
+            padding-bottom: 90px; /* 底部留空，防止内容被导航栏遮挡 */
+            overflow-x: hidden;
+        }
+
+        /* --- 顶部 Header 区域 --- */
+        .header {
+            text-align: center;
+            padding: 35px 20px 25px;
+            background-color: var(--bg-color);
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary-color);
+            letter-spacing: -0.5px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            margin-right: 8px;
+            color: var(--accent-color);
+        }
+
+        .tagline {
+            margin-top: 8px;
+            font-size: 14px;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .search-bar {
+            margin-top: 24px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            border: none;
+            border-radius: 12px;
+            background-color: var(--search-bg);
+            font-size: 15px;
+            color: var(--secondary-color);
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            top: 50%;
+            left: 16px;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: #999;
+        }
+
+        /* --- 主要内容区块 --- */
+        .section {
+            margin-top: var(--section-spacing);
+            padding-left: 20px; /* 左侧留白 */
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .title-icon {
+            margin-right: 8px;
+            font-size: 20px;
+        }
+
+        /* --- 轮播容器和箭头样式 (新增) --- */
+        .carousel-wrapper {
+            position: relative;
+            /* 调整右侧边距，确保滚动到最后时内容不贴边 */
+            margin-right: 0;
+        }
+
+        /* 滚动容器 */
+        .scroll-container {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory; /* 启用滚动捕捉 */
+            -webkit-overflow-scrolling: touch; /* iOS 平滑滚动 */
+            gap: 12px; /* 卡片间距 */
+            padding-right: 20px; /* 右侧留白 */
+            padding-bottom: 10px;
+            scroll-behavior: smooth; /* 平滑滚动效果 */
+            /* 隐藏滚动条 */
+            scrollbar-width: none;
+            -ms-overflow-style: none; 
+        }
+        .scroll-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 导航按钮通用样式 */
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%) translateY(-15px); /* 垂直居中并稍微上移以对齐卡片中心 */
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.95); /* 高亮背景 */
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 10; /* 确保在最上层 */
+            opacity: 0; /* 默认隐藏 */
+            transition: opacity 0.3s ease, transform 0.1s ease, background-color 0.2s;
+            outline: none;
+            user-select: none;
+        }
+        
+        /* 鼠标悬停在区域时显示按钮 (电脑端) */
+        .carousel-wrapper:hover .nav-btn {
+            opacity: 1;
+        }
+
+        /* 触屏设备默认显示按钮 (可选方案) */
+        @media (hover: none) {
+            .nav-btn {
+                opacity: 1;
+                background-color: rgba(255, 255, 255, 0.98);
+            }
+        }
+
+        /* 按钮点击效果 */
+        .nav-btn:active {
+            transform: translateY(-50%) translateY(-15px) scale(0.92);
+            background-color: #f0f0f0;
+        }
+
+        .nav-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: #555;
+        }
+
+        /* 左侧按钮位置 */
+        .left-btn {
+            left: 10px;
+            display: none; /* 初始隐藏 */
+        }
+
+        /* 右侧按钮位置 */
+        .right-btn {
+            right: 10px;
+        }
+
+        /* 按钮不可用状态 */
+        .nav-btn.disabled {
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+
+        /* --- 卡片样式 --- */
+        .card-link {
+            display: block;
+            text-decoration: none;
+            flex: 0 0 auto;
+            width: 110px; /* 卡片宽度 */
+            scroll-snap-align: start; /* 滚动捕捉对齐点 */
+            color: inherit;
+            transition: transform 0.2s ease;
+        }
+        
+        .card-link:active {
+            transform: scale(0.96); /* 点击缩放反馈 */
+        }
+
+        .card-image-container {
+            width: 100%;
+            height: 70px;
+            border-radius: var(--card-border-radius);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            position: relative;
+        }
+
+        /* 卡片背景色定义 */
+        .card-live-1 { background-color: #1a2c4e; }
+        .card-live-2 { background-color: #462368; }
+        .card-live-3 { background-color: #e8f5e9; color: #1a2c4e; }
+        .card-data { background-color: #e8f5e9; color: #1a2c4e; }
+        .card-shop-1 { background-color: #d21f2a; }
+        .card-shop-2 { background-color: #002e6d; }
+        .card-shop-3 { background-color: #000000; }
+
+        /* 图片通用样式 */
+        .card-image {
+            width: auto;
+            height: 36px; /* 限制高度 */
+            max-width: 80%; /* 限制最大宽度 */
+            object-fit: contain; /* 保持纵横比缩放 */
+            position: relative;
+            z-index: 1;
+        }
+        
+        .card-title {
+            margin-top: 10px;
+            font-size: 12px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        /* --- 底部导航栏 --- */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%); /* 居中固定 */
+            width: 100%;
+            max-width: var(--app-max-width);
+            /* 毛玻璃背景效果 */
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0 28px; /* 底部增加 padding 适配全面屏手势条 */
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.03);
+            z-index: 100;
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #999;
+            font-size: 10px;
+            flex: 1;
+            transition: color 0.2s ease, transform 0.1s ease;
+            cursor: pointer;
+             -webkit-tap-highlight-color: transparent;
+        }
+
+        .tab-item:active {
+             transform: scale(0.9); /* 点击反馈 */
+             color: var(--secondary-color);
+        }
+
+        /* 激活状态示例 */
+        .tab-item.active {
+            color: var(--accent-color);
+        }
+
+        .tab-icon {
+            width: 26px;
+            height: 26px;
+            margin-bottom: 4px;
+            fill: currentColor;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="header">
+            <div class="logo">
+                <!-- Logo SVG -->
+                <svg class="logo-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12,2A10,10 0 1,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 1,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 1,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 1,0 16,12A4,4 0 0,0 12,8Z" /></svg>
+                AceLink
+            </div>
+            <p class="tagline">一击直达你的网球世界</p>
+            <div class="search-bar">
+                <!--svg class="search-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" /></svg -->
+                <!--input type="text" class="search-input" placeholder="搜索网球网站 / 比赛 / 数据"-->
+            </div>
+        </header>
+
+        <main>
+            <!-- =========================
+                 Section 1: 直播网站
+            ========================= -->
+            <section class="section">
+                <h2 class="section-title">
+                    <span class="title-icon">🎥</span> 网球直播
+                </h2>
+                <!-- 新增的轮播包裹层 -->
+                <div class="carousel-wrapper">
+                    <!-- 左侧按钮 -->
+                    <button class="nav-btn left-btn" aria-label="上一页">
+                        <svg viewBox="0 0 24 24"><path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"/></svg>
+                    </button>
+
+                    <!-- 滚动容器 -->
+                    <div class="scroll-container">
+                        <!-- 卡片 1: Tennis TV -->
+                        <a href="https://www.tennistv.com/" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-1">
+                                <!-- 
+                                  【自定义图片说明】
+                                  如果你想用自己的图片，请删除下面的 <svg> 标签，
+                                  然后取消注释并修改下面的 <img> 标签代码：
+                                  <img src="你的图片文件夹/tennistv.png" alt="Tennis TV Logo" class="card-image">
+                                -->
+                                <img src="图片\tennistv.png" alt="Tennis TV Logo" class="card-image">
+                            </div>
+                            <p class="card-title">Tennis TV</p>
+                        </a>
+                        <!-- 卡片 2: ESPN+ -->
+                        <a href="https://www.espn.com/tennis/" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-2">
+                                <img src="图片\ESPN.png" alt="ESPNLogo" class="card-image">
+                            </div>
+                            <p class="card-title">ESPN+</p>
+                        </a>
+                         <!-- 卡片 3: 爱奇艺 (演示滑动效果) -->
+                        <a href="https://sports.iqiyi.com/resource/pc/channel.html?categoryId=2195772&topicId=1700" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-2">
+							<img src="图片\爱奇艺.png" alt="爱奇艺 Logo" class="card-image">
+                                <span>爱奇艺</span>
+                            </div>
+                            <p class="card-title">爱奇艺</p>
+                        </a>
+                         <!-- 卡片 4: 优酷 (演示滑动效果) -->
+                        <a href="https://www.youku.com/ku/tiyu" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-2">
+							<img src="图片\优酷.png" alt="优酷 Logo" class="card-image">
+                                <span>优酷</span>
+                            </div>
+                            <p class="card-title">优酷</p>
+                        </a>
+                    </div> <!-- scroll-container end -->
+
+                    <!-- 右侧按钮 -->
+                    <button class="nav-btn right-btn" aria-label="下一页">
+                        <svg viewBox="0 0 24 24"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>
+                    </button>
+                </div> <!-- carousel-wrapper end -->
+            </section>
+
+            <!-- =========================
+                 Section 2: 数据网站
+            ========================= -->
+            <section class="section">
+                <h2 class="section-title">
+                    <span class="title-icon">🎥</span> 网球数据
+                </h2>
+                <!-- 新增的轮播包裹层 -->
+                <div class="carousel-wrapper">
+                    <!-- 左侧按钮 -->
+                    <button class="nav-btn left-btn" aria-label="上一页">
+                        <svg viewBox="0 0 24 24"><path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"/></svg>
+                    </button>
+
+                    <!-- 滚动容器 -->
+                    <div class="scroll-container">
+                        <!-- 卡片 1: 丘的网球 -->
+                        <a href="https://www.live-tennis.cn/zh/home" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-1">
+                                <img src="图片\丘的网球.png" alt="丘的网球 Logo" class="card-image">
+                            </div>
+                            <p class="card-title">丘的网球</p>
+                        </a>
+                        <!-- 卡片 2: Tennis Abstract -->
+                        <a href="https://www.tennisabstract.com/" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-2">
+                                <img src="图片\TennisAbstract.png" alt="Tennis Abstract Logo" class="card-image">
+                            </div>
+                            <p class="card-title">Tennis Abstract</p>
+                        </a>
+                        <!-- 卡片 3: slam_pointbypoint (文字示例) -->
+                        <a href="https://github.com/JeffSackmann/tennis_slam_pointbypoint" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-3">
+							<img src="图片\slam_pointbypoint.png" alt="slam_pointbypoint Logo" class="card-image">
+                                <!-- 这里直接用文字代替了图片 -->
+                                <span>slam_pointbypoint</span>
+                            </div>
+                            <p class="card-title">Slam_Pointbypoint</p>
+                        </a>
+                         <!-- 卡片 4: TennisStats (演示滑动效果) -->
+                        <a href="https://tennisstats.com/" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-2">
+							<img src="图片\TennisStats.png" alt="TennisStats Logo" class="card-image">
+                                <span>TennisStats</span>
+                            </div>
+                            <p class="card-title">TennisStats</p>
+                        </a>
+                         <!-- 卡片 5: kaggle -->
+                        <a href="https://www.kaggle.com/search?q=tennis" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-2">
+							<img src="图片\kaggle.png" alt="kaggle Logo" class="card-image">
+                                <span>kaggle</span>
+                            </div>
+                            <p class="card-title">kaggle</p>
+                        </a>
+                    </div> <!-- scroll-container end -->
+
+                    <!-- 右侧按钮 -->
+                    <button class="nav-btn right-btn" aria-label="下一页">
+                        <svg viewBox="0 0 24 24"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>
+                    </button>
+                </div> <!-- carousel-wrapper end -->
+            </section>
+
+            <!-- =========================
+                 Section 3: 网球赛事
+            ========================= -->
+            <section class="section">
+                <h2 class="section-title">
+                    <span class="title-icon">🎥</span> 网球赛事
+                </h2>
+                <!-- 新增的轮播包裹层 -->
+                <div class="carousel-wrapper">
+                    <!-- 左侧按钮 -->
+                    <button class="nav-btn left-btn" aria-label="上一页">
+                        <svg viewBox="0 0 24 24"><path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"/></svg>
+                    </button>
+
+                    <!-- 滚动容器 -->
+                    <div class="scroll-container">
+                        <!-- 卡片 1: 澳网 -->
+                        <a href="https://ausopen.com/" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-1">
+                                <img src="图片\澳大利亚网球公开赛.png" alt="澳网 Logo" class="card-image">
+                            </div>
+                            <p class="card-title">澳网</p>
+                        </a>
+                        <!-- 卡片 2: 法网 -->
+                        <a href="https://www.rolandgarros.com/" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-2">
+                                <img src="图片\法国网球公开赛.png" alt="法网 Logo" class="card-image">
+                            </div>
+                            <p class="card-title">法网</p>
+                        </a>
+                        <!-- 卡片 3: 温网 (文字示例) -->
+                        <a href="https://www.wimbledon.com/" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-3">
+							<img src="图片\温布尔登网球锦标赛.png" alt="温网 Logo" class="card-image">
+                                <!-- 这里直接用文字代替了图片 -->
+                                <span>温网</span>
+                            </div>
+                            <p class="card-title">温网</p>
+                        </a>
+                         <!-- 卡片 4: 美网 (演示滑动效果) -->
+                        <a href="https://www.usopen.org/" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image-container card-live-2">
+							<img src="图片\美国网球公开赛.png" alt="美网 Logo" class="card-image">
+                                <span>美网</span>
+                            </div>
+                            <p class="card-title">美网</p>
+                        </a>
+                    </div> <!-- scroll-container end -->
+
+                    <!-- 右侧按钮 -->
+                    <button class="nav-btn right-btn" aria-label="下一页">
+                        <svg viewBox="0 0 24 24"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>
+                    </button>
+                </div> <!-- carousel-wrapper end -->
+            </section>
+        </main>
+
+        <!-- =========================
+             底部导航栏 (现在可以点击跳转了)
+        ========================= -->
+        <nav class="tab-bar">
+            <!-- 
+              【修改说明】
+              将 href="#" 修改为你想要跳转的实际页面地址。
+              例如: href="schedule.html"
+            -->
+             <a href="https://www.live-tennis.cn/zh/calendar/2025" target="_blank" class="tab-item">
+                <svg class="tab-icon" viewBox="0 0 24 24"><path d="M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V5H19V19M7,10H9V17H7V10M11,7H13V17H11V7M15,13H17V17H15V13Z" /></svg>
+                <span>巡回赛历</span>
+            </a>
+           <a href="https://www.atptour.com/en" target="_blank" class="tab-item">
+                <svg class="tab-icon" viewBox="0 0 24 24"><path d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z" /></svg>
+                <span>ATP</span>
+            </a>
+            <a href="https://www.wtatennis.com/" target="_blank" class="tab-item">
+                <svg class="tab-icon" viewBox="0 0 24 24"><path d="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z" /></svg>
+                <span>WTA</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- =========================
+         JavaScript 交互脚本
+    ========================= -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取页面上所有的轮播包裹层
+            const carousels = document.querySelectorAll('.carousel-wrapper');
+
+            carousels.forEach(wrapper => {
+                const container = wrapper.querySelector('.scroll-container');
+                const leftBtn = wrapper.querySelector('.left-btn');
+                const rightBtn = wrapper.querySelector('.right-btn');
+                
+                // 计算每次滚动的距离：大约是两个卡片的宽度 + 间距
+                // 卡片宽110px，间距12px。滚动 250px 体验比较好
+                const scrollAmount = 250; 
+
+                // 更新按钮状态（显示/隐藏）的函数
+                const updateButtonState = () => {
+                    // 如果已经滚动到最左边 (允许 5px 误差)
+                    if (container.scrollLeft <= 5) {
+                        leftBtn.classList.add('disabled');
+                        leftBtn.style.display = 'none'; // 确保彻底隐藏不占位
+                    } else {
+                        leftBtn.classList.remove('disabled');
+                        leftBtn.style.display = 'flex';
+                    }
+
+                    // 计算是否滚动到最右边
+                    // scrollWidth 是总内容宽度，clientWidth 是可视区域宽度
+                    const maxScrollLeft = container.scrollWidth - container.clientWidth;
+                    // 允许 5px 的误差
+                    if (container.scrollLeft >= maxScrollLeft - 5) {
+                        rightBtn.classList.add('disabled');
+                    } else {
+                        rightBtn.classList.remove('disabled');
+                    }
+                };
+
+                // 点击右侧按钮
+                rightBtn.addEventListener('click', () => {
+                    container.scrollBy({
+                        left: scrollAmount,
+                        behavior: 'smooth' // 平滑滚动
+                    });
+                });
+
+                // 点击左侧按钮
+                leftBtn.addEventListener('click', () => {
+                    container.scrollBy({
+                        left: -scrollAmount,
+                        behavior: 'smooth'
+                    });
+                });
+
+                // 监听滚动事件，实时更新按钮状态
+                // 使用防抖 (debounce) 稍微优化性能
+                let scrollTimeout;
+                container.addEventListener('scroll', () => {
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(updateButtonState, 50);
+                });
+
+                // 初始化时检查一次按钮状态
+                // 需要延时一点点确保元素渲染计算完毕
+                setTimeout(updateButtonState, 200);
+                
+                // 窗口大小改变时也要重新计算 (应对屏幕旋转等情况)
+                 window.addEventListener('resize', updateButtonState);
+            });
+        });
+    </script>
+
+</body>
+</html>
